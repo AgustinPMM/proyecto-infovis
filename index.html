@@ -2,21 +2,134 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>Proyecto Infovis</title>
-    
-    <link rel="stylesheet" href="style.css">
-    
-    <script src="https://cdn.plot.ly/plotly-3.4.0.min.js" charset="utf-8"></script>
+    <title>Generos de Películas</title>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 </head>
 <body>
 
-    <div id="grafico"></div>
+    <div id="chartContainer" style="width:100%; height:600px;"></div>
 
     <script>
-    </script>
+        const genreDictionary = {
+            28: "Acción",
+            12: "Aventura",
+            16: "Animación",
+            35: "Comedia",
+            80: "Crimen",
+            99: "Documental",
+            18: "Drama",
+            10751: "Familia",
+            14: "Fantasía",
+            36: "Historia",
+            27: "Terror",
+            10402: "Música",
+            9648: "Misterio",
+            10749: "Romance",
+            878: "Ciencia Ficción",
+            10770: "Película de TV",
+            53: "Suspenso",
+            10752: "Guerra",
+            37: "Western"
+        };
 
+        const colorPalette = {
+            "Acción": "#E63946",
+            "Aventura": "#FFB703",
+            "Animación": "#A8DADC",
+            "Comedia": "#457B9D",
+            "Crimen": "#1D3557",
+            "Documental": "#588157",
+            "Drama": "#3A5A40",
+            "Familia": "#A3B18A",
+            "Fantasía": "#DAD7CD",
+            "Historia": "#344E41",
+            "Terror": "#000000",
+            "Música": "#C9ADA7",
+            "Misterio": "#9B2226",
+            "Romance": "#FFB703",
+            "Ciencia Ficción": "#219EBC",
+            "Suspenso": "#023047",
+            "Guerra": "#BC6C25",
+            "Western": "#DDA15E",
+            "Desconocido": "#CED4DA"
+        };
+
+        fetch('data.json')
+            .then(response => response.json())
+            .then(movieData => {
+                const statsByYear = {};
+                const allGenresSet = new Set();
+                const allYearsSet = new Set();
+
+                movieData.forEach(movie => {
+                    if (!movie.release_date || movie.vote_average === undefined) return; 
+                    
+                    const releaseYear = parseInt(movie.release_date.substring(0, 4));
+                    allYearsSet.add(releaseYear);
+                    
+                    if (!statsByYear[releaseYear]) statsByYear[releaseYear] = {};
+
+                    movie.genre_ids.forEach(genreId => {
+                        const genreName = genreDictionary[genreId] || "Unknown";
+                        allGenresSet.add(genreName);
+                        
+                        if (!statsByYear[releaseYear][genreName]) {
+                            statsByYear[releaseYear][genreName] = { ratingSum: 0, movieCount: 0 };
+                        }
+                        
+                        statsByYear[releaseYear][genreName].ratingSum += movie.vote_average;
+                        statsByYear[releaseYear][genreName].movieCount += 1;
+                    });
+                });
+
+                const sortedYears = Array.from(allYearsSet).sort((a, b) => a - b);
+                const allTraces = [];
+
+                Array.from(allGenresSet).forEach(genre => {
+                    const currentTrace = {
+                        x: sortedYears,
+                        y: [],
+                        type: 'bar',
+                        name: genre,
+                        hovertemplate: `<b>${genre}</b><br>Rating: %{y}<extra></extra>`,
+                        marker: { color: colorPalette[genre] || "#333" }
+                    };
+
+                    sortedYears.forEach(year => {
+                        if (statsByYear[year] && statsByYear[year][genre]) {
+                            const data = statsByYear[year][genre];
+                            const averageRating = data.ratingSum / data.movieCount;
+                            currentTrace.y.push(parseFloat(averageRating.toFixed(2)));
+                        } else {
+                            currentTrace.y.push(0);
+                        }
+                    });
+
+                    allTraces.push(currentTrace);
+                });
+
+                const plotLayout = {
+                    title: 'Calificación promedio por género y año',
+                    xaxis: {
+                        title: 'Año de Lanzamiento',
+                        range: [1926, 2026],
+                        tickmode: 'linear',
+                        tick0: 1926,
+                        dtick: 1, 
+                        tickangle: -60,
+                        automargin: true
+                    },
+                    yaxis: { 
+                        title: 'Calificación Promedio' 
+                    },
+                    barmode: 'stack',
+                    showlegend: true
+                };
+
+                Plotly.newPlot('chartContainer', allTraces, plotLayout);
+            })
+            .catch(error => console.error("Error loading data:", error));
+    </script>
 </body>
 </html>
