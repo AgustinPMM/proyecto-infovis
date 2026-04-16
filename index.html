@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <div id="chartContainer" style="width:100%; height:600px;"></div>
+    <div id="chartContainer" style="width:100%; height:650px;"></div>
 
     <script>
         const genreDictionary = {
@@ -36,33 +36,39 @@
         const colorPalette = {
             "Acción": "#E63946",
             "Aventura": "#FFB703",
-            "Animación": "#A8DADC",
-            "Comedia": "#457B9D",
+            "Animación": "#99f567",
+            "Comedia": "#ede732",
             "Crimen": "#1D3557",
             "Documental": "#588157",
-            "Drama": "#3A5A40",
+            "Drama": "#8c3512",
             "Familia": "#A3B18A",
             "Fantasía": "#DAD7CD",
             "Historia": "#344E41",
             "Terror": "#000000",
             "Música": "#C9ADA7",
-            "Misterio": "#9B2226",
-            "Romance": "#FFB703",
-            "Ciencia Ficción": "#219EBC",
-            "Suspenso": "#023047",
+            "Misterio": "#482b54",
+            "Romance": "#e02bb6",
+            "Ciencia Ficción": "#88d9f2",
+            "Suspenso": "#1b417d",
             "Guerra": "#BC6C25",
-            "Western": "#DDA15E",
+            "Western": "#d68b0b",
             "Desconocido": "#CED4DA"
         };
 
         fetch('data.json')
             .then(response => response.json())
             .then(movieData => {
+                const filteredData = movieData.filter(movie => {
+                const year = new Date(movie.release_date).getFullYear();
+                return year >= 2005 && year <= 2025;
+            });
                 const statsByYear = {};
                 const allGenresSet = new Set();
                 const allYearsSet = new Set();
 
-                movieData.forEach(movie => {
+                const genresToExclude = ["Película de TV", "Familia", "Música"];
+
+                filteredData.forEach(movie => {
                     if (!movie.release_date || movie.vote_average === undefined) return; 
                     
                     const releaseYear = parseInt(movie.release_date.substring(0, 4));
@@ -72,6 +78,9 @@
 
                     movie.genre_ids.forEach(genreId => {
                         const genreName = genreDictionary[genreId] || "Unknown";
+                        if (!genreName || genresToExclude.includes(genreName)) {
+                            return;
+                        }
                         allGenresSet.add(genreName);
                         
                         if (!statsByYear[releaseYear][genreName]) {
@@ -110,12 +119,12 @@
                 });
 
                 const plotLayout = {
-                    title: 'Calificación promedio por género y año',
+                    title: 'Calificación promedio de películas por género desde 2005 a 2025',
                     xaxis: {
                         title: 'Año de Lanzamiento',
-                        range: [1926, 2026],
+                        range: [2004.5, 2025.5],
                         tickmode: 'linear',
-                        tick0: 1926,
+                        tick0: 2005,
                         dtick: 1, 
                         tickangle: -60,
                         automargin: true
