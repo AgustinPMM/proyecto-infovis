@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generos de Películas</title>
+    <title>Géneros de Películas</title>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 </head>
 <body>
@@ -67,7 +67,7 @@
                 const filteredData = movieData.filter(movie => {
                     if (!movie.release_date) return false;
                     const year = parseInt(movie.release_date.substring(0, 4));
-                    return year >= 2005 && year <= 2025;
+                    return year >= 2015 && year <= 2025;
                 });
 
                 const statsByYear = {};
@@ -128,19 +128,19 @@
                 });
 
                 const plotLayout = {
-                    title: 'Calificación promedio de películas por género desde 2005 a 2025',
+                    title: 'Calificación promedio de películas por género (2015-2025)',
                     xaxis: {
                         title: 'Año de Lanzamiento',
-                        range: [2004.5, 2025.5],
+                        range: [2014.5, 2025.5],
                         tickmode: 'linear',
-                        tick0: 2005,
+                        tick0: 2015,
                         dtick: 1,
                         tickangle: -60,
                         automargin: true
                     },
                     yaxis: {
                         title: 'Calificación Promedio',
-                        range: [5, 8]
+                        range: [5.5, 8]
                     },
                     showlegend: true
                 };
