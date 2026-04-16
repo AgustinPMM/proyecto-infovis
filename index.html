@@ -33,60 +33,67 @@
             37: "Western"
         };
 
+        const genreMap = {
+            "Acción":          "Acción/Aventura",
+            "Aventura":        "Acción/Aventura",
+            "Fantasía":        "Fantasía/Ciencia Ficción",
+            "Ciencia Ficción": "Fantasía/Ciencia Ficción",
+            "Crimen":          "Crimen/Suspenso",
+            "Misterio":        "Crimen/Suspenso",
+            "Suspenso":        "Crimen/Suspenso",
+            "Drama":           "Drama",
+            "Comedia":         "Comedia",
+            "Animación":       "Animación",
+            "Romance":         "Romance",
+            "Historia":        "Historia",
+            "Terror":          "Terror"
+        };
+
         const colorPalette = {
-            "Acción": "#E63946",
-            "Aventura": "#FFB703",
-            "Animación": "#99f567",
-            "Comedia": "#ede732",
-            "Crimen": "#1D3557",
-            "Documental": "#588157",
-            "Drama": "#8c3512",
-            "Familia": "#A3B18A",
-            "Fantasía": "#DAD7CD",
-            "Historia": "#344E41",
-            "Terror": "#000000",
-            "Música": "#C9ADA7",
-            "Misterio": "#482b54",
-            "Romance": "#e02bb6",
-            "Ciencia Ficción": "#88d9f2",
-            "Suspenso": "#1b417d",
-            "Guerra": "#BC6C25",
-            "Western": "#d68b0b",
-            "Desconocido": "#CED4DA"
+            "Acción/Aventura":      "#E63946",
+            "Fantasía/Cs. Ficción": "#88d9f2",
+            "Crimen/Suspenso":  "#1D3557",
+            "Drama":            "#8c3512",
+            "Comedia":          "#ede732",
+            "Animación":        "#99f567",
+            "Romance":          "#e02bb6",
+            "Historia":         "#344E41",
+            "Terror":           "#555555"
         };
 
         fetch('data.json')
             .then(response => response.json())
             .then(movieData => {
                 const filteredData = movieData.filter(movie => {
-                const year = new Date(movie.release_date).getFullYear();
-                return year >= 2005 && year <= 2025;
-            });
+                    if (!movie.release_date) return false;
+                    const year = parseInt(movie.release_date.substring(0, 4));
+                    return year >= 2005 && year <= 2025;
+                });
+
                 const statsByYear = {};
                 const allGenresSet = new Set();
                 const allYearsSet = new Set();
 
-                const genresToExclude = ["Película de TV", "Familia", "Música"];
-
                 filteredData.forEach(movie => {
-                    if (!movie.release_date || movie.vote_average === undefined) return; 
-                    
+                    if (!movie.release_date || movie.vote_average === undefined) return;
+
                     const releaseYear = parseInt(movie.release_date.substring(0, 4));
                     allYearsSet.add(releaseYear);
-                    
+
                     if (!statsByYear[releaseYear]) statsByYear[releaseYear] = {};
 
                     movie.genre_ids.forEach(genreId => {
-                        const genreName = genreDictionary[genreId] || "Unknown";
-                        if (!genreName || genresToExclude.includes(genreName)) {
-                            return;
-                        }
+                        const rawGenre = genreDictionary[genreId];
+                        if (!rawGenre) return;
+                        const genreName = genreMap[rawGenre];
+                        if (!genreName) return;
+
                         allGenresSet.add(genreName);
-                        
+
                         if (!statsByYear[releaseYear][genreName]) {
                             statsByYear[releaseYear][genreName] = { ratingSum: 0, movieCount: 0 };
                         }
-                        
+
                         statsByYear[releaseYear][genreName].ratingSum += movie.vote_average;
                         statsByYear[releaseYear][genreName].movieCount += 1;
                     });
@@ -99,10 +106,12 @@
                     const currentTrace = {
                         x: sortedYears,
                         y: [],
-                        type: 'bar',
+                        type: 'scatter',
+                        mode: 'lines+markers',
                         name: genre,
                         hovertemplate: `<b>${genre}</b><br>Rating: %{y}<extra></extra>`,
-                        marker: { color: colorPalette[genre] || "#333" }
+                        line: { color: colorPalette[genre] || "#333", width: 2 },
+                        marker: { color: colorPalette[genre] || "#333", size: 5 }
                     };
 
                     sortedYears.forEach(year => {
@@ -111,7 +120,7 @@
                             const averageRating = data.ratingSum / data.movieCount;
                             currentTrace.y.push(parseFloat(averageRating.toFixed(2)));
                         } else {
-                            currentTrace.y.push(0);
+                            currentTrace.y.push(null);
                         }
                     });
 
@@ -125,14 +134,14 @@
                         range: [2004.5, 2025.5],
                         tickmode: 'linear',
                         tick0: 2005,
-                        dtick: 1, 
+                        dtick: 1,
                         tickangle: -60,
                         automargin: true
                     },
-                    yaxis: { 
-                        title: 'Calificación Promedio' 
+                    yaxis: {
+                        title: 'Calificación Promedio',
+                        range: [5, 8]
                     },
-                    barmode: 'stack',
                     showlegend: true
                 };
 
