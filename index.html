@@ -46,12 +46,12 @@
         };
 
         const colorPalette = {
-            "Acción": "#D55E00",
-            "Drama": "#CC79A7",
-            "Comedia":"#F0E442",
-            "Romance":"#009E73",
-            "Crimen/Suspenso": "#0072B2",
-            "Animación": "#000000"
+            "Acción": "#E63946",
+            "Drama": "#882255",
+            "Comedia":"#DDCC77",
+            "Romance":"#CC6677",
+            "Crimen/Suspenso": "#1b56e0",
+            "Animación": "#88CCEE"
         };
 
         fetch('data.json')
@@ -103,8 +103,8 @@
                         mode: 'lines+markers',
                         name: genre,
                         hovertemplate: `<b>${genre}</b><br>Rating: %{y}<extra></extra>`,
-                        line: { color: colorPalette[genre] || "#333", width: 2 },
-                        marker: { color: colorPalette[genre] || "#333", size: 5 }
+                        line: { color: colorPalette[genre] || "#333", width: 3 },
+                        marker: { color: colorPalette[genre] || "#333", size: 8 }
                     };
 
                     sortedYears.forEach(year => {
