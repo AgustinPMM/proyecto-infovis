@@ -34,31 +34,24 @@
         };
 
         const genreMap = {
-            "Acción":          "Acción/Aventura",
-            "Aventura":        "Acción/Aventura",
-            "Fantasía":        "Fantasía/Ciencia Ficción",
-            "Ciencia Ficción": "Fantasía/Ciencia Ficción",
-            "Crimen":          "Crimen/Suspenso",
-            "Misterio":        "Crimen/Suspenso",
-            "Suspenso":        "Crimen/Suspenso",
-            "Drama":           "Drama",
-            "Comedia":         "Comedia",
-            "Animación":       "Animación",
-            "Romance":         "Romance",
-            "Historia":        "Historia",
-            "Terror":          "Terror"
+            "Acción": "Acción",
+            "Aventura":"Acción",
+            "Drama": "Drama",
+            "Comedia": "Comedia",
+            "Romance": "Romance",
+            "Crimen": "Crimen/Suspenso",
+            "Misterio": "Crimen/Suspenso",
+            "Suspenso": "Crimen/Suspenso",
+            "Animación": "Animación"
         };
 
         const colorPalette = {
-            "Acción/Aventura":      "#E63946",
-            "Fantasía/Cs. Ficción": "#88d9f2",
-            "Crimen/Suspenso":  "#1D3557",
-            "Drama":            "#8c3512",
-            "Comedia":          "#ede732",
-            "Animación":        "#99f567",
-            "Romance":          "#e02bb6",
-            "Historia":         "#344E41",
-            "Terror":           "#555555"
+            "Acción": "#D55E00",
+            "Drama": "#CC79A7",
+            "Comedia":"#F0E442",
+            "Romance":"#009E73",
+            "Crimen/Suspenso": "#0072B2",
+            "Animación": "#000000"
         };
 
         fetch('data.json')
@@ -142,9 +135,34 @@
                         title: 'Calificación Promedio',
                         range: [5.5, 8]
                     },
-                    showlegend: true
+                    showlegend: true,
+                    shapes: [
+                        {
+                            type: 'rect',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: 2020,
+                            x1: 2022.5,
+                            y0: 0,
+                            y1: 1,
+                            fillcolor: '#d3d3d3',
+                            opacity: 0.3,
+                            line: { width: 0 }
+                        }
+                    ],
+                    annotations: [
+                        {
+                            x: 2021,
+                            y: 1,
+                            xref: 'x',
+                            yref: 'paper',
+                            text: 'COVID-19',
+                            showarrow: false,
+                            font: { size: 12, color: '#888888' },
+                            yanchor: 'bottom'
+                        }
+                    ]
                 };
-
                 Plotly.newPlot('chartContainer', allTraces, plotLayout);
             })
             .catch(error => console.error("Error loading data:", error));
