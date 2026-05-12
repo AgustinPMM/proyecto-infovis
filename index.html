@@ -5,12 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Géneros de Películas</title>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 20px;
+        }
+        #controls {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #controls label { font-weight: 600; }
+        #genreSelect {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: #fff;
+            cursor: pointer;
+            min-width: 220px;
+        }
+        #genreSelect:focus {
+            outline: none;
+            border-color: #1b56e0;
+        }
+    </style>
 </head>
 <body>
-    <div style="margin-bottom: 15px;">
-     <label for="genreSelect" style="font-weight: 600; margin-right: 8px;">Selecciona un género:</label>
-        <select id="genreSelect" style="padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; min-width: 220px;"></select>
+
+    <div id="controls">
+        <label for="genreSelect">Selecciona un género:</label>
+        <select id="genreSelect"></select>
     </div>
+
     <div id="chartContainer" style="width:100%; height:650px;"></div>
 
     <script>
@@ -58,54 +86,93 @@
             "Western": "#B5651D"
         };
 
+        // Rangos de escala visual
+        const MARKER_MIN_SIZE = 4;
+        const MARKER_MAX_SIZE = 22;
+        const LINE_MIN_WIDTH = 1;
+        const LINE_MAX_WIDTH = 7;
+
+        function scaleValue(value, minVal, maxVal, outMin, outMax) {
+            if (maxVal === minVal) return (outMin + outMax) / 2;
+            const t = (value - minVal) / (maxVal - minVal);
+            return outMin + t * (outMax - outMin);
+        }
+
         fetch('data.json')
             .then(response => response.json())
             .then(movieData => {
                 const filteredData = movieData.filter(movie => {
                     if (!movie.release_date) return false;
+                    if (!movie.vote_average) return false;
                     const year = parseInt(movie.release_date.substring(0, 4));
                     return year >= 1926 && year <= 2025;
                 });
 
                 const statsByYear = {};
                 const allGenresSet = new Set();
-                const allYearsSet = new Set();
 
                 filteredData.forEach(movie => {
-                    if (!movie.release_date || movie.vote_average === undefined) return;
-
+                    if (movie.vote_average === undefined) return;
                     const releaseYear = parseInt(movie.release_date.substring(0, 4));
-                    allYearsSet.add(releaseYear);
-
                     if (!statsByYear[releaseYear]) statsByYear[releaseYear] = {};
 
                     movie.genre_ids.forEach(genreId => {
                         const genreName = genreDictionary[genreId];
                         if (!genreName) return;
                         allGenresSet.add(genreName);
-
                         if (!statsByYear[releaseYear][genreName]) {
                             statsByYear[releaseYear][genreName] = { ratingSum: 0, movieCount: 0 };
                         }
-
                         statsByYear[releaseYear][genreName].ratingSum += movie.vote_average;
                         statsByYear[releaseYear][genreName].movieCount += 1;
                     });
                 });
 
-                const sortedYears = Array.from(allYearsSet).sort((a, b) => a - b);
+                // Eje continuo de 1926 a 2025
+                const sortedYears = [];
+                for (let y = 1926; y <= 2025; y++) sortedYears.push(y);
 
                 const sortedGenres = Array.from(allGenresSet).sort((a, b) => a.localeCompare(b, 'es'));
                 const tracesByGenre = {};
 
                 sortedGenres.forEach(genre => {
-                    const yValues = sortedYears.map(year => {
-                        if (statsByYear[year] && statsByYear[year][genre]) {
-                            const d = statsByYear[year][genre];
-                            return parseFloat((d.ratingSum / d.movieCount).toFixed(2));
+                    // Rango de conteos para escalar dentro de este género
+                    const counts = sortedYears
+                        .filter(y => statsByYear[y]?.[genre])
+                        .map(y => statsByYear[y][genre].movieCount);
+
+                    const minCount = counts.length ? Math.min(...counts) : 1;
+                    const maxCount = counts.length ? Math.max(...counts) : 1;
+
+                    const yValues      = [];
+                    const markerSizes  = [];
+                    const hoverTexts   = [];
+
+                    sortedYears.forEach(year => {
+                        const d = statsByYear[year]?.[genre];
+                        if (d) {
+                            const avg = parseFloat((d.ratingSum / d.movieCount).toFixed(2));
+                            const mSize = scaleValue(d.movieCount, minCount, maxCount, MARKER_MIN_SIZE, MARKER_MAX_SIZE);
+                            yValues.push(avg);
+                            markerSizes.push(Math.round(mSize));
+                            hoverTexts.push(
+                                `<b>${genre}</b><br>` +
+                                `Año: ${year}<br>` +
+                                `Rating: ${avg}<br>` +
+                                `Películas: ${d.movieCount}`
+                            );
+                        } else {
+                            yValues.push(null);
+                            markerSizes.push(MARKER_MIN_SIZE);
+                            hoverTexts.push('');
                         }
-                        return null;
                     });
+
+                    // Grosor de línea: promedio de conteos del género (escala global)
+                    const avgCount = counts.length
+                        ? counts.reduce((a, b) => a + b, 0) / counts.length
+                        : 1;
+                    const lineWidth = scaleValue(avgCount, minCount, maxCount, LINE_MIN_WIDTH, LINE_MAX_WIDTH);
 
                     tracesByGenre[genre] = {
                         x: sortedYears,
@@ -114,9 +181,17 @@
                         mode: 'lines+markers',
                         name: genre,
                         connectgaps: false,
-                        hovertemplate: `<b>${genre}</b><br>Año: %{x}<br>Rating: %{y}<extra></extra>`,
-                        line: { color: colorPalette[genre] || "#333", width: 3 },
-                        marker: { color: colorPalette[genre] || "#333", size: 7 }
+                        text: hoverTexts,
+                        hovertemplate: '%{text}<extra></extra>',
+                        line: {
+                            color: colorPalette[genre] || "#333",
+                            width: lineWidth
+                        },
+                        marker: {
+                            color: colorPalette[genre] || "#333",
+                            size: markerSizes,   // cada punto tiene su propio tamaño
+                            opacity: 0.85
+                        }
                     };
                 });
 
@@ -130,7 +205,7 @@
                 });
 
                 const plotLayout = {
-                    title: 'Calificación promedio de películas por género (1926-2025)',
+                    title: '',
                     xaxis: {
                         title: 'Año de Lanzamiento',
                         range: [1925.5, 2025.5],
@@ -172,20 +247,21 @@
                         }
                     ]
                 };
+
                 function renderGenre(genre) {
-                plotLayout.title = {
-                text: `Calificación promedio — ${genre} (1926-2025)<br><sub>De las 100 películas más populares por año</sub>`,
-                x: 0.5,
-                xanchor: 'center'
-            };
-                Plotly.newPlot('chartContainer', [tracesByGenre[genre]], plotLayout, { responsive: true });
-            }
+                    plotLayout.title = {
+                        text: `Calificación promedio — ${genre} (1926-2025)<br><sub>De las 100 películas más populares por año</sub>`,
+                        x: 0.5,
+                        xanchor: 'center'
+                    };
+                    Plotly.newPlot('chartContainer', [tracesByGenre[genre]], plotLayout, { responsive: true });
+                }
 
-            const initialGenre = sortedGenres[0];
-            select.value = initialGenre;
-            renderGenre(initialGenre);
+                const initialGenre = sortedGenres[0];
+                select.value = initialGenre;
+                renderGenre(initialGenre);
 
-            select.addEventListener('change', (e) => renderGenre(e.target.value));
+                select.addEventListener('change', (e) => renderGenre(e.target.value));
             })
             .catch(error => console.error("Error loading data:", error));
     </script>
