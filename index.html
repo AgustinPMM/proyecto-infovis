@@ -16,6 +16,21 @@
         <select id="genreSelect"></select>
         <label for="volumeSlider" style="margin-left: 15px;">Volume:</label>
         <input type="range" id="volumeSlider" min="0" max="100" value="50">
+        <button id="toggleContext" style="margin-left: 15px;">Mostrar/Ocultar Contexto Histórico</button>
+    </div>
+    <div id="contextPanel" style="display: none;">
+        <h3>Hitos Históricos del Cine (1926 - 2025)</h3>
+        <ul>
+            <li><strong>Edad de Oro de Hollywood (1920s-1930s):</strong> Consolidación de los grandes estudios y transición definitiva del cine mudo al sonoro.</li>
+            <li><strong>Technicolor de 3 tiras (1932):</strong> Primer uso comercial del color pleno en el cine, cambiando la estética visual.</li>
+            <li><strong>Segunda Guerra Mundial (1939-1945):</strong> Fuerte impacto en los presupuestos y auge de temáticas de propaganda.</li>
+            <li><strong>Fin del Código Hays (1968):</strong> Cae la estricta censura moral en Hollywood, permitiendo mostrar violencia y realismo crudo en el "Nuevo Hollywood".</li>
+            <li><strong>Inicio de los Blockbusters (1975):</strong> El estreno masivo de "Tiburón" (Jaws) crea el modelo moderno de superproducciones.</li>
+            <li><strong>Renacimiento de Disney (1989-1999):</strong> A partir de "La Sirenita", la animación recupera el éxito comercial masivo y el prestigio crítico.</li>
+            <li><strong>Inicio del Streaming (2007):</strong> Netflix lanza su servicio de video bajo demanda, transformando radicalmente la distribución de películas.</li>
+            <li><strong>Huelga de Guionistas WGA (2007-2008):</strong> Paralización que obligó a muchas películas a filmarse de forma apresurada o sin guiones terminados.</li>
+            <li><strong>Pandemia COVID-19 (2020-2022):</strong> Cierre global de cines, retrasos masivos en producción y explosión del consumo en el hogar.</li>
+        </ul>
     </div>
 
     <script>
@@ -157,7 +172,18 @@
             
             try { activeSynth.triggerAttackRelease(freq, dur); } catch(e) {}
         }
+        const contextBtn = document.getElementById('toggleContext');
+        const contextPanel = document.getElementById('contextPanel');
 
+        contextBtn.addEventListener('click', () => {
+            if (contextPanel.style.display === 'none') {
+                contextPanel.style.display = 'block';
+                contextBtn.textContent = 'Ocultar Contexto Histórico';
+            } else {
+                contextPanel.style.display = 'none';
+                contextBtn.textContent = 'Ver Contexto Histórico';
+            }
+        });
         fetch('data.json')
             .then(response => response.json())
             .then(movieData => {
