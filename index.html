@@ -43,50 +43,24 @@
 
     <script>
         const genreDictionary = {
-            28: "Acción",
-            12: "Aventura",
-            16: "Animación",
-            35: "Comedia",
-            80: "Crimen",
-            99: "Documental",
-            18: "Drama",
-            10751: "Familia",
-            14: "Fantasía",
-            36: "Historia",
-            27: "Terror",
-            10402: "Música",
-            9648: "Misterio",
+            28:    "Acción",
+            18:    "Drama",
+            35:    "Comedia",
             10749: "Romance",
-            878: "Ciencia Ficción",
-            10770: "Película de TV",
-            53: "Suspenso",
-            10752: "Guerra",
-            37: "Western"
+            80:    "Crimen/Suspenso",
+            53:    "Crimen/Suspenso",
+            16:    "Animación"
         };
 
         const colorPalette = {
-            "Acción": "#E63946",
-            "Drama": "#882255",
-            "Comedia": "#DDCC77",
-            "Romance": "#CC6677",
-            "Animación": "#88CCEE",
-            "Crimen": "#1b56e0",
-            "Aventura": "#F4A261",
-            "Documental": "#6A994E",
-            "Familia": "#FFB4A2",
-            "Fantasía": "#9B5DE5",
-            "Historia": "#8D6E63",
-            "Terror": "#222222",
-            "Música": "#F72585",
-            "Misterio": "#3A0CA3",
-            "Ciencia Ficción": "#00B4D8",
-            "Película de TV": "#A8A8A8",
-            "Suspenso": "#4361EE",
-            "Guerra": "#4A4E69",
-            "Western": "#B5651D"
+            "Acción":          "#E63946",
+            "Drama":           "#882255",
+            "Comedia":         "#DDCC77",
+            "Romance":         "#CC6677",
+            "Crimen/Suspenso": "#1b56e0",
+            "Animación":       "#88CCEE"
         };
 
-        // Rangos de escala visual
         const MARKER_MIN_SIZE = 4;
         const MARKER_MAX_SIZE = 22;
         const LINE_MIN_WIDTH = 1;
@@ -128,7 +102,6 @@
                     });
                 });
 
-                // Eje continuo de 1926 a 2025
                 const sortedYears = [];
                 for (let y = 1926; y <= 2025; y++) sortedYears.push(y);
 
@@ -136,7 +109,6 @@
                 const tracesByGenre = {};
 
                 sortedGenres.forEach(genre => {
-                    // Rango de conteos para escalar dentro de este género
                     const counts = sortedYears
                         .filter(y => statsByYear[y]?.[genre])
                         .map(y => statsByYear[y][genre].movieCount);
@@ -168,7 +140,6 @@
                         }
                     });
 
-                    // Grosor de línea: promedio de conteos del género (escala global)
                     const avgCount = counts.length
                         ? counts.reduce((a, b) => a + b, 0) / counts.length
                         : 1;
@@ -189,13 +160,12 @@
                         },
                         marker: {
                             color: colorPalette[genre] || "#333",
-                            size: markerSizes,   // cada punto tiene su propio tamaño
+                            size: markerSizes,
                             opacity: 0.85
                         }
                     };
                 });
 
-                // Poblar el selector
                 const select = document.getElementById('genreSelect');
                 sortedGenres.forEach(genre => {
                     const opt = document.createElement('option');
