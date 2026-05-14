@@ -75,17 +75,19 @@
             const t = (value - minVal) / (maxVal - minVal);
             return outMin + t * (outMax - outMin);
         }
-        // Escala pentatónica de C3 a A5 (grave a agudo)
-        const PENTATONIC = [
-            "C3","D3","E3","G3","A3",
-            "C4","D4","E4","G4","A4",
-            "C5","D5","E5","G5","A5"
-        ];
-        // Función para convertir el rating en una nota musical
-        // Primero se normaliza el rating a un valor entre 0 y 10, luego se escala a la longitud de la escala pentatónica
-        function ratingToNote(rating) {
-            const idx = Math.round((Math.max(0, Math.min(10, rating)) / 10) * (PENTATONIC.length - 1));
-            return PENTATONIC[idx];
+        // Función para convertir el rating continuo a una frecuencia en Hz
+        function ratingToFrequency(rating) {
+            // Aseguramos que el rating esté entre 0 y 10
+            const clampedRating = Math.max(0, Math.min(10, rating));
+            
+            // Rango de frecuencias (C3 a A5 en Hertz)
+            const minFreq = 130.81; 
+            const maxFreq = 880.00; 
+            
+            // Mapeo logarítmico para que suene proporcional y natural al oído
+            const freq = minFreq * Math.pow(maxFreq / minFreq, clampedRating / 10);
+            
+            return freq;
         }
 
         // Objeto donde cada género tiene una función que crea un sintetizador con configuracion propia para que suene acorde a la temática del género
@@ -147,9 +149,14 @@
 
         function playNote(rating, count, minC, maxC) {
             if (!audioStarted || !activeSynth) return;
-            const note = ratingToNote(rating);
-            const dur  = 0.15 + ((count - minC) / Math.max(1, maxC - minC)) * 0.7;
-            try { activeSynth.triggerAttackRelease(note, dur); } catch(e) {}
+            
+            // Usamos nuestra nueva función matemática
+            const freq = ratingToFrequency(rating);
+            
+            const dur = 0.15 + ((count - minC) / Math.max(1, maxC - minC)) * 0.7;
+            
+            // Le pasamos 'freq' (Hz) en lugar de 'note' (String)
+            try { activeSynth.triggerAttackRelease(freq, dur); } catch(e) {}
         }
 
         fetch('data.json')
