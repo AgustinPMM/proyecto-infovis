@@ -1,0 +1,28 @@
+body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 20px;
+        }
+        
+        #genreSelect {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: #fff;
+            cursor: pointer;
+            min-width: 220px;
+        }
+        #genreSelect:focus {
+            outline: none;
+            border-color: #1b56e0;
+        }
+        #controls {
+            margin-bottom: 30px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            
+        }
+        #controls label { font-weight: 600; }

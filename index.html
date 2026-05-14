@@ -6,44 +6,17 @@
     <title>Géneros de Películas</title>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 20px;
-        }
-        #controls {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            
-        }
-        #controls label { font-weight: 600; }
-        #genreSelect {
-            padding: 8px 12px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            background-color: #fff;
-            cursor: pointer;
-            min-width: 220px;
-        }
-        #genreSelect:focus {
-            outline: none;
-            border-color: #1b56e0;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <div id="chartContainer" style="width:100%; height:650px;"></div>
     <div id="controls">
         <label for="genreSelect">Selecciona un género:</label>
         <select id="genreSelect"></select>
         <label for="volumeSlider" style="margin-left: 15px;">Volume:</label>
         <input type="range" id="volumeSlider" min="0" max="100" value="50">
     </div>
-
-    <div id="chartContainer" style="width:100%; height:650px;"></div>
 
     <script>
         const genreDictionary = {
@@ -274,7 +247,7 @@
                     },
                     yaxis: {
                         title: 'Calificación Promedio',
-                        range: [0, 10]
+                        range: [3.5, 8.5]
                     },
                     showlegend: false,
                     shapes: [
@@ -287,8 +260,111 @@
                             y0: 0,
                             y1: 1,
                             fillcolor: '#d3d3d3',
-                            opacity: 0.3,
+                            opacity: 0.5,
                             line: { width: 0 }
+                        },
+                        {
+                            type: 'line',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: 2007,
+                            x1: 2007,
+                            y0: 0,
+                            y1: 1,
+                            line: {
+                                color: '#e50914',
+                                width: 2,
+                                dash: 'dash'
+                            }
+                        },
+                        {
+                            type: 'rect',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: 1920,
+                            x1: 1930,
+                            y0: 0,
+                            y1: 1,
+                            fillcolor: '#FBD028',
+                            opacity: 0.1,
+                            line: { width: 0 }
+                        },
+                        {
+                            type: 'rect',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: 1939,
+                            x1: 1945,
+                            y0: 0,
+                            y1: 1,
+                            fillcolor: '#5D6532',
+                            opacity: 0.1,
+                            line: { width: 0 }
+                        },
+                        {
+                            type: 'line',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: 1932,
+                            x1: 1932,
+                            y0: 0,
+                            y1: 1,
+                            line: {
+                                color: '#000000',
+                                width: 2,
+                                dash: 'dash'
+                            }
+                        },
+                        {type: 'line',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: 1975,
+                            x1: 1975,
+                            y0: 0,
+                            y1: 1,
+                            line: {
+                                color: '#0D3FA9',
+                                width: 2,
+                                dash: 'dash'
+                            }
+                        },
+                        {
+                            type: 'rect',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: 1989,
+                            x1: 1999,
+                            y0: 0,
+                            y1: 1,
+                            fillcolor: '#FF69B4',
+                            opacity: 0.1,
+                            line: { width: 0 }
+                        },
+                        {
+                            type: 'rect',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: 2007,
+                            x1: 2008,
+                            y0: 0,
+                            y1: 1,
+                            fillcolor: '#000000',
+                            opacity: 0.1,
+                            line: { width: 0 }
+                        },
+                        {
+                            type: 'line',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: 1968,
+                            x1: 1968,
+                            y0: 0,
+                            y1: 1,
+                            line: {
+                                color: '#000000',
+                                width: 2,
+                                dash: 'dash'
+                            }
                         }
                     ],
                     annotations: [
@@ -301,7 +377,89 @@
                             showarrow: false,
                             font: { size: 12, color: '#888888' },
                             yanchor: 'bottom'
+                        },
+                        {
+                            x: 2007,
+                            y: 1,
+                            xref: 'x',
+                            yref: 'paper',
+                            text: 'Inicio del streaming',
+                            showarrow: false,
+                            font: { size: 12, color: '#b20710' },
+                            yanchor: 'bottom'
+                        },
+                        {
+                            x: 1927,
+                            y: 1,
+                            xref: 'x',
+                            yref: 'paper',
+                            text: 'Edad de Oro de Hollywood',
+                            showarrow: false,
+                            font: { size: 12, color: '#EFBF04' },
+                            yanchor: 'bottom'
                         }
+                        ,
+                        {
+                            x: 1942,
+                            y: 1,
+                            xref: 'x',
+                            yref: 'paper',
+                            text: 'Segunda Guerra Mundial',
+                            showarrow: false,
+                            font: { size: 12, color: '#5D6532' },
+                            yanchor: 'bottom'
+                        },
+                        {
+                            x: 1932,
+                            y: 1.03,
+                            xref: 'x',
+                            yref: 'paper',
+                            text: 'Tres colores primarios al cine',
+                            showarrow: false,
+                            font: { size: 12, color: '#000000' },
+                            yanchor: 'bottom'
+                        },
+                        {
+                            x: 1975,
+                            y: 1,
+                            xref: 'x',
+                            yref: 'paper',
+                            text: 'Inicio de los blockbusters',
+                            showarrow: false,
+                            font: { size: 12, color: '#0D3FA9' },
+                            yanchor: 'bottom'
+                        },
+                        {
+                            x: 1994,
+                            y: 1,
+                            xref: 'x',
+                            yref: 'paper',
+                            text: 'Renacimiento de Disney',
+                            showarrow: false,
+                            font: { size: 12, color: '#FF69B4' },
+                            yanchor: 'bottom'
+                        },
+                        {
+                            x: 2007.5,
+                            y: 1.03,
+                            xref: 'x',
+                            yref: 'paper',
+                            text: 'Huelga de guionistas de Hollywood',
+                            showarrow: false,
+                            font: { size: 12, color: '#000000' },
+                            yanchor: 'bottom'
+                        },
+                        {
+                            x: 1968,
+                            y: 1.03,
+                            xref: 'x',
+                            yref: 'paper',
+                            text: 'Fin del Código Hays',
+                            showarrow: false,
+                            font: { size: 12, color: '#000000' },
+                            yanchor: 'bottom'
+                        }
+
                     ]
                 };
 
@@ -310,6 +468,7 @@
                     plotLayout.title = {
                         text: `Calificación promedio — ${genre} (1926-2025)<br><sub>De las 100 películas más populares por año</sub>`,
                         x: 0.5,
+                        y: 0.97,
                         xanchor: 'center'
                     };
                     Plotly.newPlot('chartContainer', [tracesByGenre[genre]], plotLayout, { responsive: true });
