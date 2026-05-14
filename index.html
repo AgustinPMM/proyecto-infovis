@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Géneros de Películas</title>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -15,6 +16,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            
         }
         #controls label { font-weight: 600; }
         #genreSelect {
@@ -37,6 +39,8 @@
     <div id="controls">
         <label for="genreSelect">Selecciona un género:</label>
         <select id="genreSelect"></select>
+        <label for="volumeSlider" style="margin-left: 15px;">Volume:</label>
+        <input type="range" id="volumeSlider" min="0" max="100" value="50">
     </div>
 
     <div id="chartContainer" style="width:100%; height:650px;"></div>
@@ -60,16 +64,92 @@
             "Crimen/Suspenso": "#1b56e0",
             "Animación":       "#88CCEE"
         };
-
+        // Parámetros para escalado de tamaños
         const MARKER_MIN_SIZE = 4;
         const MARKER_MAX_SIZE = 22;
         const LINE_MIN_WIDTH = 1;
         const LINE_MAX_WIDTH = 7;
-
+        // Función para escalar un valor de un rango a otro
         function scaleValue(value, minVal, maxVal, outMin, outMax) {
             if (maxVal === minVal) return (outMin + outMax) / 2;
             const t = (value - minVal) / (maxVal - minVal);
             return outMin + t * (outMax - outMin);
+        }
+        // Escala pentatónica de C3 a A5 (grave a agudo)
+        const PENTATONIC = [
+            "C3","D3","E3","G3","A3",
+            "C4","D4","E4","G4","A4",
+            "C5","D5","E5","G5","A5"
+        ];
+        // Función para convertir el rating en una nota musical
+        // Primero se normaliza el rating a un valor entre 0 y 10, luego se escala a la longitud de la escala pentatónica
+        function ratingToNote(rating) {
+            const idx = Math.round((Math.max(0, Math.min(10, rating)) / 10) * (PENTATONIC.length - 1));
+            return PENTATONIC[idx];
+        }
+
+        // Objeto donde cada género tiene una función que crea un sintetizador con configuracion propia para que suene acorde a la temática del género
+        const SYNTH_CONFIG = {
+            "Acción": () => new Tone.MetalSynth({
+                frequency: 200,
+                envelope: { attack: 0.001, decay: 0.1, release: 0.1 },
+                harmonicity: 5.1, modulationIndex: 32, resonance: 3200, octaves: 1.5
+            }),
+            "Drama": () => new Tone.AMSynth({
+                harmonicity: 2,
+                envelope: { attack: 0.2, decay: 0.2, sustain: 0.6, release: 0.8 },
+                modulation: { type: "sine" },
+                modulationEnvelope: { attack: 0.5, decay: 0, sustain: 1, release: 0.5 }
+            }),
+            "Comedia": () => new Tone.PluckSynth({
+                attackNoise: 1, dampening: 4000, resonance: 0.95
+            }),
+            "Romance": () => new Tone.AMSynth({
+                harmonicity: 1.5,
+                envelope: { attack: 0.3, decay: 0.1, sustain: 0.8, release: 1.2 },
+                modulation: { type: "sine" },
+                modulationEnvelope: { attack: 0.8, decay: 0, sustain: 1, release: 1 }
+            }),
+            "Crimen/Suspenso": () => new Tone.FMSynth({
+                harmonicity: 3, modulationIndex: 10,
+                envelope: { attack: 0.01, decay: 0.3, sustain: 0.2, release: 0.6 },
+                modulation: { type: "sawtooth" }
+            }),
+            "Animación": () => new Tone.Synth({
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 0.8 }
+            })
+        };
+        // Variable global para el volumen global de todos los sintetizadores y para el sintetizador que esté activo actualmente
+        let masterVolume, activeSynth;
+        // Flag para saber si el audio ya fue iniciado
+        let audioStarted = false;   
+
+        // Función para asegurar que el audio esté iniciado y el sintetizador esté construido para el género seleccionado
+        async function ensureAudio(genre) {
+            if (!audioStarted) {
+                await Tone.start();
+                masterVolume = new Tone.Volume(Tone.gainToDb(50 / 100)).toDestination();
+                audioStarted = true;
+            }
+            if (!activeSynth) buildSynth(genre);
+        }
+
+        function buildSynth(genre) {
+            if (activeSynth) {
+                try { activeSynth.dispose(); } catch(e) {}
+            }
+            const factory = SYNTH_CONFIG[genre] || SYNTH_CONFIG["Drama"];
+            activeSynth = factory();
+            activeSynth.connect(masterVolume);
+            activeSynth.volume.value = -10;
+        }
+
+        function playNote(rating, count, minC, maxC) {
+            if (!audioStarted || !activeSynth) return;
+            const note = ratingToNote(rating);
+            const dur  = 0.15 + ((count - minC) / Math.max(1, maxC - minC)) * 0.7;
+            try { activeSynth.triggerAttackRelease(note, dur); } catch(e) {}
         }
 
         fetch('data.json')
@@ -219,19 +299,67 @@
                 };
 
                 function renderGenre(genre) {
+                    currentGenre = genre;
                     plotLayout.title = {
                         text: `Calificación promedio — ${genre} (1926-2025)<br><sub>De las 100 películas más populares por año</sub>`,
                         x: 0.5,
                         xanchor: 'center'
                     };
                     Plotly.newPlot('chartContainer', [tracesByGenre[genre]], plotLayout, { responsive: true });
+
+                    // Hover: tocar nota al pasar el cursor por un punto
+                    const chartDiv = document.getElementById('chartContainer');
+                    chartDiv.removeAllListeners('plotly_hover');
+                    chartDiv.on('plotly_hover', async (eventData) => {
+                        const point = eventData.points?.[0];
+                        if (!point || point.y === null) return;
+
+                        await ensureAudio(currentGenre);
+
+                        const counts = sortedYears
+                            .filter(y => statsByYear[y]?.[currentGenre])
+                            .map(y => statsByYear[y][currentGenre].movieCount);
+                        const minC = Math.min(...counts);
+                        const maxC = Math.max(...counts);
+
+                        const count = statsByYear[point.x]?.[currentGenre]?.movieCount || 1;
+                        playNote(point.y, count, minC, maxC);
+                    });
                 }
 
                 const initialGenre = sortedGenres[0];
+                let currentGenre = initialGenre;
                 select.value = initialGenre;
                 renderGenre(initialGenre);
 
-                select.addEventListener('change', (e) => renderGenre(e.target.value));
+                select.addEventListener('change', async (e) => {
+                    const genre = e.target.value;
+                    await ensureAudio(genre);
+                    buildSynth(genre);
+                    renderGenre(genre);
+                });
+                const volumeSlider = document.getElementById('volumeSlider');
+
+                volumeSlider.addEventListener('input', async (e) => {
+
+                    if (!audioStarted) {
+                        const currentSelectedGenre = document.getElementById('genreSelect').value;
+                        await ensureAudio(currentSelectedGenre);
+                    }
+
+                    if (!masterVolume) return;
+                    
+                    const sliderVal = parseInt(e.target.value);
+
+                    if (sliderVal === 0) {
+                        // Silenciamos completamente
+                        masterVolume.mute = true;
+                    } else {
+                        // Quitamos el mute y calculamos el volumen
+                        masterVolume.mute = false;
+                        masterVolume.volume.value = Tone.gainToDb(sliderVal / 100);
+                    }
+                });
             })
             .catch(error => console.error("Error loading data:", error));
     </script>
