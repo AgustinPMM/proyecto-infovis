@@ -98,7 +98,16 @@
         // Variable global para el volumen global de todos los sintetizadores y para el sintetizador que esté activo actualmente
         let masterVolume, activeSynth;
         // Flag para saber si el audio ya fue iniciado
-        let audioStarted = false;   
+        let audioStarted = false; 
+        // Por si queremos agregar sonidos personalizados para ciertos géneros y/o años específicos
+        const CustomSounds = {
+            "Animación": {
+                2018: "custom_sounds/prowler_spiderverse.mp3"
+
+            }
+        }
+
+        const audioCache = {};  
 
         // Función para asegurar que el audio esté iniciado y el sintetizador esté construido para el género seleccionado
         async function ensureAudio(genre) {
@@ -120,15 +129,32 @@
             activeSynth.volume.value = -10;
         }
 
-        function playNote(rating, count, minC, maxC) {
-            if (!audioStarted || !activeSynth) return;
+        function playNote(rating, count, minC, maxC, year, genre) {
+            if (!audioStarted) return; // Quitamos el !activeSynth de aquí
+
+            // Revisamos los sonidos custom primero
+            if (CustomSounds[genre] && CustomSounds[genre][year]) {
+                const soundPath = CustomSounds[genre][year];
+                
+                if (!audioCache[soundPath]) {
+                    audioCache[soundPath] = new Tone.Player({
+                        url: soundPath,
+                        autostart: true 
+                    }).connect(masterVolume);
+                } else {
+                    if (audioCache[soundPath].loaded) {
+                        audioCache[soundPath].start();
+                    }
+                }
+                return;
+            }
             
-            // Usamos nuestra nueva función matemática
+            //Si no hay sonido custom, suena el sintetizador normal
+            if (!activeSynth) return; 
+
             const freq = ratingToFrequency(rating);
-            
             const dur = 0.15 + ((count - minC) / Math.max(1, maxC - minC)) * 0.7;
             
-            // Le pasamos 'freq' (Hz) en lugar de 'note' (String)
             try { activeSynth.triggerAttackRelease(freq, dur); } catch(e) {}
         }
 
@@ -489,7 +515,9 @@
                         const maxC = Math.max(...counts);
 
                         const count = statsByYear[point.x]?.[currentGenre]?.movieCount || 1;
-                        playNote(point.y, count, minC, maxC);
+                        const currentYear = point.x; 
+                        
+                        playNote(point.y, count, minC, maxC, currentYear, currentGenre);
                     });
                 }
 
